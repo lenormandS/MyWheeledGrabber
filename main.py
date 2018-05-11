@@ -4,7 +4,6 @@ import pygame.camera
 import pygame.joystick
 import pygame.mixer
 import os
-#from fonction import PositionFunction
 
 class MWG(object):
 	def __init__(self):
@@ -13,8 +12,6 @@ class MWG(object):
 		self.fenetre = pygame.display.set_mode([640,480],RESIZABLE)
 		self.label = pygame.display.set_caption("WheeledGrabber Control Windows")
 		self.font = pygame.font.Font(None,36)
-#posFunc = PositionFunction()
-
 		self.size = (640,480)
 		self.cam0 = pygame.camera.Camera('/dev/video0',self.size)
 		self.cam0.start()

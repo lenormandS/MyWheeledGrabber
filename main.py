@@ -4,54 +4,31 @@ import pygame.camera
 import pygame.joystick
 import pygame.mixer
 import os
+from commande import Commande
 
 class MWG(object):
 	def __init__(self):
+		try:
+			self.size_X = sys.argv[1]
+		except:
+			self.size_X = 640
+		try:
+			self.size_Y = sys.argv[2]
+		except:
+			self.size_Y = 480
+		
 		pygame.init()
 		pygame.camera.init()
-		self.fenetre = pygame.display.set_mode([640,480],RESIZABLE)
+		self.window = pygame.display.set_mode([int(self.size_X),int(self.size_Y)],RESIZABLE)
 		self.label = pygame.display.set_caption("WheeledGrabber Control Windows")
-		self.font = pygame.font.Font(None,36)
-		self.size = (640,480)
-		self.cam0 = pygame.camera.Camera('/dev/video0',self.size)
-		self.cam0.start()
+		#self.cam = pygame.camera.Camera('/dev/video0',(int(self.size_X),int(self.size_Y)))
+		self.cam = pygame.camera.Camera(pygame.camera.list_cameras()[0],(int(self.size_X),int(self.size_Y)))
+		self.cam.start()
+		self.commande = Commande()
 
-	def forward(self):
-		print('forward function')
-	
-	def backward(self):
-		print('backward function')
-		
-	def left(self):
-		print('left function')
-		
-	def right(self):
-		print('right function')
-		
-	def grab(self):
-		text = self.font.render("Initialization grab", 1, pygame.Color(232,25,150))
-		self.fenetre.blit(text,(10,10))
-		pygame.display.update()
-
-	def drop(self):
-		print('drop function')
-	
-	def arm_rotation_forward(self):
-		print('arm_rotation_forward function')
-	
-	def arm_rotation_backward(self):
-		print('arm_rotation_backward function')
-	
-	def arm_rotation_right(self):
-		print('arm_rotation_right function')
-	
-	def arm_rotation_left(self):
-		print('arm_rotation_left function')
-		
 	def run(self):
 		while True:
-			image = self.cam0.get_image()
-			self.fenetre.blit(image,(0,0))
+			self.window.blit(self.cam.get_image(),(0,0))
 			pygame.display.update()
 			for event in pygame.event.get():
 				if event.type == pygame.QUIT:
@@ -61,30 +38,37 @@ class MWG(object):
 				if event.type == pygame.KEYDOWN:
 					if event.key == pygame.K_F4 or event.key == pygame.K_q:
 						sys.exit()
+						
 					if event.key == pygame.K_UP:
-						self.forward()
+						self.commande.forward()
+						
 					if event.key == pygame.K_DOWN:
-						self.backward()
+						self.commande.backward()
+						
 					if event.key == pygame.K_RIGHT:
-						self.right()
+						self.commande.right()
+						
 					if event.key == pygame.K_LEFT:
-						self.left()
+						self.commande.left()
+						
 					if event.key == pygame.K_a:
-						self.grab()
+						self.commande.grab(self.window,'drop')
+						
 					if event.key == pygame.K_l:
-						self.drop()
+						self.commande.drop(self.window,'grab')
+						
 					if event.key == pygame.K_s:
-						screensaver(fenetre)
+						self.commande.screensaver(self.window)
+						
 					if event.key == pygame.K_c:
-						text = self.font.render("hello", 1, pygame.Color(255,0,0))
-						self.fenetre.blit(text,(10,10))
+						self.window.blit(self.commande.text_component('helloo',255,0,0),(10,10))
 						pygame.display.update()
 #evenement du joystick bouton:
 				if event.type == pygame.JOYBUTTONDOWN:
 					if event.button == 5: #fermeture de la pince
-						self.grab()
+						self.commande.grab(self.window,'grab')
 					if event.button == 4: #Ouverture de la pince
-						self.drop()
+						self.commande.drop(self.window,'drop')
 					else: 
 						print(event.button)
 				
@@ -93,28 +77,28 @@ class MWG(object):
 
 					if (joystick.get_axis(0) > -32768 and joystick.get_axis(0) < 32768):
 						if (joystick.get_axis(0) > -32768 and joystick.get_axis(0) < 0):
-							self.arm_rotation_left()
+							self.commande.arm_rotation_left()
 
 					if (joystick.get_axis(0) > 0 and joystick.get_axis(0) <= 32768):
-						self.arm_rotation_right()
+						self.commande.arm_rotation_right()
 
 					if (joystick.get_axis(1) > -32768 and joystick.get_axis(1) < 32768):
 						if (joystick.get_axis(1) > -32768 and joystick.get_axis(1) < 0):
-							self.arm_rotation_forward()
+							self.commande.arm_rotation_forward()
 
 					if (joystick.get_axis(1) > 0 and joystick.get_axis(1) <= 32768):
-						self.arm_rotation_backward()
+						self.commande.arm_rotation_backward()
 #evenement du joystick hat:
 				if event.type == pygame.JOYHATMOTION:
 
 					if (joystick.get_hat(0) == (0,1)): #up
-						self.arm_rotation_forward()
+						self.commande.arm_rotation_forward()
 					if (joystick.get_hat(0) == (0,-1)): #down
-						self.arm_rotation_backward()
+						self.commande.arm_rotation_backward()
 					if (joystick.get_hat(0) == (1,0)): #droite
-						self.arm_rotation_right()
+						self.commande.arm_rotation_right()
 					if (joystick.get_hat(0) == (-1,0)): #gauche
-						self.arm_rotation_left()
+						self.commande.arm_rotation_left()
 				
 #initialisation du joystick et des bouton et axis:
 			joystick_count = pygame.joystick.get_count()

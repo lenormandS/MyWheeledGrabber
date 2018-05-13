@@ -5,9 +5,20 @@ import pygame.joystick
 import pygame.mixer
 import os
 from commande import Commande
+import time
 
 class MWG(object):
+
 	def __init__(self):
+	
+		class Inversed(object):
+			def __init__(self):
+				self.boolean = False
+				self.h = 1
+				self.v = 0
+			def set_bool(self,value):
+				self.boolean = value
+		
 		try:
 			self.size_X = sys.argv[1]
 		except:
@@ -21,14 +32,23 @@ class MWG(object):
 		pygame.camera.init()
 		self.window = pygame.display.set_mode([int(self.size_X),int(self.size_Y)],RESIZABLE)
 		self.label = pygame.display.set_caption("WheeledGrabber Control Windows")
-		#self.cam = pygame.camera.Camera('/dev/video0',(int(self.size_X),int(self.size_Y)))
 		self.cam = pygame.camera.Camera(pygame.camera.list_cameras()[0],(int(self.size_X),int(self.size_Y)))
 		self.cam.start()
 		self.commande = Commande()
-
+		self.intizalize = self.commande.initialize('Online')
+		self.position_X = self.commande.get_position_X()
+		self.position_Y = self.commande.get_position_Y()
+		self.online = True
+		self.inversed = Inversed()
+		self.inv_sys = self.commande.initialize('Inversed : ' + str(self.inversed.boolean))
+		
 	def run(self):
 		while True:
-			self.window.blit(self.cam.get_image(),(0,0))
+			self.window.blit(pygame.transform.flip(self.cam.get_image(),self.inversed.h,self.inversed.v),(0,0))
+			self.window.blit(self.intizalize,(10,10))
+			self.window.blit(self.inv_sys,(10,40))
+			self.window.blit(self.position_X,(10,70))
+			self.window.blit(self.position_Y,(10,100))
 			pygame.display.update()
 			for event in pygame.event.get():
 				if event.type == pygame.QUIT:
@@ -36,33 +56,52 @@ class MWG(object):
 
 #evenement du clavier:
 				if event.type == pygame.KEYDOWN:
-					if event.key == pygame.K_F4 or event.key == pygame.K_q:
-						sys.exit()
+					if event.key == pygame.K_p:
+						if self.online:
+							self.intizalize = self.commande.initialize('Offline')
+							self.online = False
+						else:
+							self.intizalize = self.commande.initialize('Online')
+							self.online = True
+								
+					if self.online:
+						if event.key == pygame.K_F4 or event.key == pygame.K_q:
+							sys.exit()
+							
+						if event.key == pygame.K_i:
+							if self.inversed.boolean:
+								self.inversed.set_bool(False)
+								self.inversed.h = 1
+							else:
+								self.inversed.set_bool(True)
+								self.inversed.h = 0
+							self.inv_sys = self.commande.initialize('Inversed : ' + str(self.inversed.boolean))
 						
-					if event.key == pygame.K_UP:
-						self.commande.forward()
+						if event.key == pygame.K_UP:
+							self.commande.forward()
+							self.position_Y = self.commande.get_position_Y()
 						
-					if event.key == pygame.K_DOWN:
-						self.commande.backward()
+						if event.key == pygame.K_DOWN:
+							self.commande.backward()
+							self.position_Y = self.commande.get_position_Y()
 						
-					if event.key == pygame.K_RIGHT:
-						self.commande.right()
+						if event.key == pygame.K_RIGHT:
+							self.commande.right()
+							self.position_X = self.commande.get_position_X()
 						
-					if event.key == pygame.K_LEFT:
-						self.commande.left()
+						if event.key == pygame.K_LEFT:
+							self.commande.left()
+							self.position_X = self.commande.get_position_X()
+
+						if event.key == pygame.K_a:
+							self.commande.grab(self.window,'drop')
 						
-					if event.key == pygame.K_a:
-						self.commande.grab(self.window,'drop')
+						if event.key == pygame.K_l:
+							self.commande.drop(self.window,'grab')
 						
-					if event.key == pygame.K_l:
-						self.commande.drop(self.window,'grab')
+						if event.key == pygame.K_s:
+							self.commande.screensaver(self.window)
 						
-					if event.key == pygame.K_s:
-						self.commande.screensaver(self.window)
-						
-					if event.key == pygame.K_c:
-						self.window.blit(self.commande.text_component('helloo',255,0,0),(10,10))
-						pygame.display.update()
 #evenement du joystick bouton:
 				if event.type == pygame.JOYBUTTONDOWN:
 					if event.button == 5: #fermeture de la pince
